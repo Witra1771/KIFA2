@@ -1,0 +1,221 @@
+SELECT *
+INTO #temp_scan_now_new
+FROM
+(
+    SELECT ISNULL(ROLN_DISP, '') ROLN_DISP,
+           BOXD_NBRN,
+           BOXD_PART,
+           MODD_NAME,
+           CLOR_DESC,
+           MODD_GEND STYL_GEND,
+           SUM(BOXD_QTTY) Total,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '6'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME0,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '7'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME1,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '8'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME2,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '9'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME3,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '10'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME4,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '11'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME5,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '12'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME6,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '13'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME7,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '14'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME8,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '15'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME9,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '16'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME10,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '17'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME11,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '18'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME12,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '19'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME13,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '20'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME14,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '21'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME15,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '22'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME16,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '23'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME17,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '0'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME18,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '1'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME19,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '2'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME20,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '3'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME21,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '4'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME22,
+           SUM(CASE DATEPART(HOUR, POPI_DTTM) WHEN   '5'   THEN    BOXD_QTTY   ELSE    0   END) AS TIME23,
+
+           PRTMERP.PRTM.UFW_GET_COMPONENT_BOTTOM(BOXD_COMP, BOXD_DIVI) AS COMP,
+           ISNULL(BOXD_ASMD, '') PRDS_ASMD,
+           CASE LEN(PRTMERP.PRTM.UFW_GET_ROLNXM_DISPLAY(BOXD_CELL, 'ASM'))
+               WHEN '3' THEN
+                   'C-0' + RIGHT(PRTMERP.PRTM.UFW_GET_ROLNXM_DISPLAY(BOXD_CELL, 'ASM'), 1)
+               ELSE
+                   PRTMERP.PRTM.UFW_GET_ROLNXM_DISPLAY(BOXD_CELL, 'ASM')
+           END AS PRDS_CELL,
+           CASE
+               WHEN LEFT(POPI_RMKS, 8) = 'AUTO OUT'
+                    OR LEFT(POPI_RMKS, 7) = 'AUTO IN' THEN
+                   '1'
+               ELSE
+                   '0'
+           END AS STAT
+    FROM PRTMERP.PRTM.TP_POPBOTTOM_HPS
+        INNER JOIN PRTMERP.PRTM.TP_BBOXD
+            ON POPI_FLAG = 'O'
+               AND BOXD_CODE = POPI_DATA COLLATE Korean_Wansung_CI_AS
+        LEFT JOIN IR2MASTER.prtm.TB_MODELD
+            ON MODD_CODE = LEFT(BOXD_PART, 6)
+        LEFT JOIN IR2MASTER.prtm.TP_ROLNXM_NEW
+            ON ROLN_LINE = BOXD_LINE COLLATE DATABASE_DEFAULT
+               AND ROLN_OPCD = 'HPS'
+        LEFT JOIN PRTMERP.PRTM.HPS_STYLCLR
+            ON STYL_PART = BOXD_PART
+               AND STYL_DIVI = CONVERT(INT, BOXD_COMP) - 1
+        LEFT JOIN PRTMERP.PRTM.HPS_CLRMSTR
+            ON STYL_CLRID = CLOR_CODE
+    WHERE POPI_DTTM
+          BETWEEN '2022-07-04 00:00:00' AND '2022-07-04 23:59:59'
+          AND BOXD_DIVI = '01'
+          AND ISNULL(BOXD_PART, '') LIKE '%%'
+          AND ISNULL(MODD_NAME, '') LIKE '%%'
+          AND BOXD_ORDR <> 'NS'
+    GROUP BY BOXD_PART,
+             MODD_NAME,
+             BOXD_NBRN,
+             ISNULL(BOXD_PART, ''),
+             ISNULL(MODD_NAME, ''),
+             MODD_GEND,
+             ROLN_DISP,
+             BOXD_COMP,
+             BOXD_DIVI,
+             BOXD_ASMD,
+             BOXD_CELL,
+             CLOR_DESC,
+             CASE
+                 WHEN LEFT(POPI_RMKS, 8) = 'AUTO OUT'
+                      OR LEFT(POPI_RMKS, 7) = 'AUTO IN' THEN
+                     '1'
+                 ELSE
+                     '0'
+             END
+) A;
+
+SELECT *
+INTO #temp_sum
+FROM
+(
+    SELECT ISNULL(ROLN_DISP, '') ROLN_DISP,
+           PRDS_NBRN,
+           ISNULL(PRDS_PART, '') PRDS_PART,
+           ISNULL(MODD_NAME, '') MODD_NAME,
+           CLOR_DESC,
+           MODD_GEND STYL_GEND,
+           SUM(PRDS_QTTY+PRDS_MQTY) AS Total,
+           SUM(CASE WHEN   PRDS_TIME = 6  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME0,
+           SUM(CASE WHEN   PRDS_TIME = 7  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME1,
+           SUM(CASE WHEN   PRDS_TIME = 8  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME2,
+           SUM(CASE WHEN   PRDS_TIME = 9  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME3,
+           SUM(CASE WHEN   PRDS_TIME = 10  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME4,
+           SUM(CASE WHEN   PRDS_TIME = 11  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME5,
+           SUM(CASE WHEN   PRDS_TIME = 12  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME6,
+           SUM(CASE WHEN   PRDS_TIME = 13  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME7,
+           SUM(CASE WHEN   PRDS_TIME = 14  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME8,
+           SUM(CASE WHEN   PRDS_TIME = 15  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME9,
+           SUM(CASE WHEN   PRDS_TIME = 16  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME10,
+           SUM(CASE WHEN   PRDS_TIME = 17  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME11,
+           SUM(CASE WHEN   PRDS_TIME = 18  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME12,
+           SUM(CASE WHEN   PRDS_TIME = 19  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME13,
+           SUM(CASE WHEN   PRDS_TIME = 20  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME14,
+           SUM(CASE WHEN   PRDS_TIME = 21  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME15,
+           SUM(CASE WHEN   PRDS_TIME = 22  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME16,
+           SUM(CASE WHEN   PRDS_TIME = 23  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME17,
+           SUM(CASE WHEN   PRDS_TIME = 0  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME18,
+           SUM(CASE WHEN   PRDS_TIME = 1  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME19,
+           SUM(CASE WHEN   PRDS_TIME = 2  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME20,
+           SUM(CASE WHEN   PRDS_TIME = 3  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME21,
+           SUM(CASE WHEN   PRDS_TIME = 4  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME22,
+           SUM(CASE WHEN   PRDS_TIME = 5  THEN    PRDS_QTTY+PRDS_MQTY   ELSE    0   END) AS TIME23,
+           PRTMERP.PRTM.UFW_GET_COMPONENT_BOTTOM(PRDS_COMP, PRDS_DIVI) AS COMP,
+           ISNULL(PRDS_ASMD, '') PRDS_ASMD,
+           CASE LEN(PRTMERP.PRTM.UFW_GET_ROLNXM_DISPLAY(PRDS_CELL, 'ASM'))
+               WHEN '3' THEN
+                   'C-0' + RIGHT(PRTMERP.PRTM.UFW_GET_ROLNXM_DISPLAY(PRDS_CELL, 'ASM'), 1)
+               ELSE
+                   PRTMERP.PRTM.UFW_GET_ROLNXM_DISPLAY(PRDS_CELL, 'ASM')
+           END AS PRDS_CELL,
+           CASE
+               WHEN LEFT(PRDS_RMKS, 8) = 'AUTO OUT'
+                    OR LEFT(PRDS_RMKS, 7) = 'AUTO IN' THEN
+                   '1'
+               ELSE
+                   '0'
+           END AS STAT
+    FROM PRTMERP.PRTM.HPS_PRODSUMOT
+        LEFT JOIN IR2MASTER.prtm.TB_MODELD
+            ON MODD_CODE = LEFT(PRDS_PART, 6)
+        LEFT JOIN IR2MASTER.prtm.TP_ROLNXM_NEW
+            ON ROLN_LINE = PRDS_LINE COLLATE Korean_Wansung_CI_AS
+               AND ROLN_OPCD = 'IPP'
+        LEFT JOIN PRTMERP.PRTM.IP_STYLCLR
+            ON STYL_PART = PRDS_PART
+               AND STYL_DIVI = CONVERT(INT, PRDS_COMP) - 1
+        LEFT JOIN PRTMERP.PRTM.IP_CLRMSTR
+            ON STYL_CLRID = CLOR_CODE
+    WHERE PRDS_DATE
+          BETWEEN '2022-07-05' AND '2022-07-05'
+          AND PRDS_DIVI = '01'
+          AND ISNULL(PRDS_PART, '') LIKE '%%'
+          AND ISNULL(MODD_NAME, '') LIKE '%%'
+          AND PRDS_ORDR <> 'NS'
+    GROUP BY PRDS_NBRN,
+             ISNULL(PRDS_PART, ''),
+             ISNULL(MODD_NAME, ''),
+             MODD_GEND,
+             ROLN_DISP,
+             PRDS_COMP,
+             PRDS_DIVI,
+             PRDS_ASMD,
+             PRDS_CELL,
+             CLOR_DESC,
+             CASE
+                 WHEN LEFT(PRDS_RMKS, 8) = 'AUTO OUT'
+                      OR LEFT(PRDS_RMKS, 7) = 'AUTO IN' THEN
+                     '1'
+                 ELSE
+                     '0'
+             END
+) B;
+
+
+SELECT *
+FROM #temp_scan_now_new
+UNION ALL
+SELECT ROLN_DISP COLLATE Korean_Wansung_CI_AS,
+       PRDS_NBRN COLLATE Korean_Wansung_CI_AS,
+       PRDS_PART COLLATE Korean_Wansung_CI_AS,
+       MODD_NAME COLLATE Korean_Wansung_CI_AS,
+       CLOR_DESC COLLATE Korean_Wansung_CI_AS,
+       STYL_GEND COLLATE Korean_Wansung_CI_AS,
+       Total,
+       TIME0,
+       TIME1,
+       TIME2,
+       TIME3,
+       TIME4,
+       TIME5,
+       TIME6,
+       TIME7,
+       TIME8,
+       TIME9,
+       TIME10,
+       TIME11,
+       TIME12,
+       TIME13,
+       TIME14,
+       TIME15,
+       TIME16,
+       TIME17,
+       TIME18,
+       TIME19,
+       TIME20,
+       TIME21,
+       TIME22,
+       TIME23,
+       COMP COLLATE Korean_Wansung_CI_AS,
+       PRDS_ASMD COLLATE Korean_Wansung_CI_AS,
+       PRDS_CELL COLLATE Korean_Wansung_CI_AS,
+       STAT COLLATE Korean_Wansung_CI_AS
+FROM #temp_sum;
+
+DROP TABLE #temp_scan_now_new,
+           #temp_sum;
